@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from db import database, models
 from api.endpoints import auth, repartidores, pedidos, bot
+from fastapi.responses import Response
 
 # Inicializar Base de Datos
 try:
@@ -23,3 +24,7 @@ app.include_router(bot.router, tags=["Bot Telegram"])
 @app.get("/")
 def root():
     return {"msg": "Backend Modular Activo 🚀"}
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(content=b"", media_type="image/x-icon")

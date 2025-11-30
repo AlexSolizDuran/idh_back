@@ -27,23 +27,34 @@ def seed_data():
     try:
         print("Insertando datos de ejemplo...")
 
-        # --- Crear Repartidores ---
+        # --- Crear Repartidores con Ubicación ---
+        # Repartidor 1: Juan Pérez (Ubicado MUY CERCA de la sucursal)
+        # Ganará la asignación automática por cercanía.
         repartidor1 = Repartidor(
             nombre_completo="Juan Pérez",
             email="prueba1@gmail.com",
+            # Como get_password_hash ahora devuelve texto plano, esto guardará "123456"
             hash_contrasena=get_password_hash("123456"),
             edad="25",
             telefono="123456789",
-            estado_disponibilidad="disponible"
+            estado_disponibilidad="disponible",
+            latitud=-17.783300, # A unos metros del restaurante
+            longitud=-63.182100
         )
+
+        # Repartidor 2: Ana Gómez (Ubicada un poco más lejos)
+        # Será la segunda opción si Juan rechaza.
         repartidor2 = Repartidor(
             nombre_completo="Ana Gómez",
             email="prueba2@gmail.com",
             hash_contrasena=get_password_hash("123456"),
             edad="20",
             telefono="987654321",
-            estado_disponibilidad="no_disponible"
+            estado_disponibilidad="disponible", 
+            latitud=-17.785000, # A unas cuadras
+            longitud=-63.185000
         )
+
         db.add(repartidor1)
         db.add(repartidor2)
         db.commit()
@@ -92,6 +103,7 @@ def seed_data():
         # Hacemos commit aquí para guardar los vehículos antes de crear los pedidos
         db.commit()
         
+        # Pedido 1: Listo para que la cocina o el bot inicien la búsqueda
         pedido1 = Pedido(
             cliente_id=cliente1.cliente_id,
             descripcion_pedido="1x Pizza familiar, 1x Refresco 2L",
@@ -100,6 +112,7 @@ def seed_data():
             estado_pedido="LISTO_PARA_RECOGER"
         )
         
+        # Pedido 2: Ya en proceso (para probar el historial)
         pedido2 = Pedido(
             cliente_id=cliente2.cliente_id,
             repartidor_id=repartidor1.repartidor_id, # Asignado a Juan
@@ -110,6 +123,7 @@ def seed_data():
             instrucciones_entrega="Dejar en la puerta."
         )
 
+        # Pedido 3: Recién creado
         pedido3 = Pedido(
             cliente_id=cliente1.cliente_id,
             descripcion_pedido="1x Ensalada César",
@@ -134,6 +148,3 @@ def seed_data():
 if __name__ == "__main__":
     seed_data()
     print("Proceso de seeding finalizado.")
-
-# Para ejecutar este script, usa el siguiente comando desde el directorio raíz 'back_restauran':
-# python -m db.seed

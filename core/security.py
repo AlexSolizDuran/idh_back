@@ -1,25 +1,27 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
 from .config import settings
 
-# Contexto para el hash de contraseñas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Eliminamos passlib y bcrypt para la demo
 
 class TokenData(BaseModel):
     """Modelo Pydantic para los datos contenidos en el JWT."""
     repartidor_id: Optional[int] = None
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica una contraseña plana contra su hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """
+    DEMO: Compara texto plano directamente.
+    """
+    return plain_password == hashed_password
 
 def get_password_hash(password: str) -> str:
-    """Genera un hash bcrypt para una contraseña."""
-    return pwd_context.hash(password)
+    """
+    DEMO: Retorna la contraseña tal cual (sin hash).
+    """
+    return password
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """
@@ -37,8 +39,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def decode_access_token(token: str) -> Optional[TokenData]:
     """
-    Decodifica un token JWT y valida su contenido.
-    Retorna los datos del token o None si es inválido.
+    Decodifica un token JWT.
     """
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
