@@ -228,3 +228,24 @@ def get_pedidos_by_repartidor(db: Session, repartidor_id: int) -> list[models.Pe
              .filter(models.Pedido.repartidor_id == repartidor_id)\
              .order_by(models.Pedido.fecha_creacion.desc())\
              .all()
+             
+             
+def actualizar_ubicacion_pedido(db: Session, telegram_id: int, lat: float, lon: float):
+    # 1. Buscar al cliente
+    cliente = get_cliente_by_telegram_id(db, telegram_id)
+    if not cliente:
+        return None
+        
+    # 2. Buscar su último pedido activo (PENDIENTE o BUSCANDO)
+    pedido = db.query(models.Pedido)\
+        .filter(models.Pedido.cliente_id == cliente.cliente_id)\
+        .order_by(models.Pedido.pedido_id.desc())\
+        .first()
+        
+    if pedido:
+        pedido.latitud_cliente = lat
+        pedido.longitud_cliente = lon
+        db.commit()
+        db.refresh(pedido)
+        return pedido
+    return None

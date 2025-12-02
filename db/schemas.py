@@ -47,6 +47,8 @@ class Pedido(PedidoBase):
     repartidor_id: Optional[int] = None
     estado_pedido: str
     fecha_creacion: datetime
+    latitud_cliente: Optional[float] = None
+    longitud_cliente: Optional[float] = None
     cliente:Cliente
     class Config:
         orm_mode = True # Modo ORM

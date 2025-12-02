@@ -63,6 +63,8 @@ class Pedido(Base):
     instrucciones_entrega = Column(Text, nullable=True)
     monto_total = Column(DECIMAL(10, 2), nullable=False)
     
+    latitud_cliente = Column(Float, nullable=True)
+    longitud_cliente = Column(Float, nullable=True)
     # --- CAMPO PARA LOGICA DE RECHAZOS ---
     repartidores_rechazados = Column(Text, default="") 
 

@@ -35,7 +35,7 @@ async def recibir_pedido_web(
 ):
     """Recibe el pedido desde el fetch de JS."""
     try:
-        # 1. Crear Pedido en BD
+        # 1. Crear Pedido (Tu código existente)
         nuevo_pedido = schemas.PedidoCreate(
             descripcion_pedido=datos.mensaje,
             direccion_entrega="Ubicación Telegram",
@@ -43,16 +43,32 @@ async def recibir_pedido_web(
             cliente_telegram_id=datos.chat_id,
             instrucciones_entrega="Pedido Web App"
         )
-        
         pedido_db = crud.create_pedido(db, nuevo_pedido)
 
-        # 2. Confirmar por mensaje al chat
+        # 2. Confirmar Pedido (Tu código existente)
         telegram.enviar_mensaje(
             datos.chat_id, 
             f"✅ *Pedido #{pedido_db.pedido_id} Recibido*\nTotal: {datos.total} Bs\n\n🔎 Buscando repartidor..."
         )
+
+        # --- NUEVO: PEDIR UBICACIÓN CON BOTÓN ---
+        # Creamos un teclado especial que solicita el GPS al usuario
+        teclado_gps = {
+            "keyboard": [[
+                {"text": "📍 Enviar mi Ubicación Actual", "request_location": True}
+            ]],
+            "resize_keyboard": True,
+            "one_time_keyboard": True
+        }
         
-        # 3. Iniciar lógica de Asignación (5 segundos)
+        telegram.enviar_mensaje(
+            datos.chat_id, 
+            "📍 Para una entrega exacta, presiona el botón de abajo:", 
+            teclado_gps
+        )
+        # ----------------------------------------
+        
+        # 3. Iniciar lógica de Asignación (Tu código existente)
         crud.actualizar_estado_pedido(db, pedido_db.pedido_id, 'BUSCANDO_REPARTIDOR')
         background_tasks.add_task(pedidos_logic.ciclo_asignacion_pedido, pedido_db.pedido_id, db)
 
@@ -120,5 +136,22 @@ async def telegram_webhook(
             except Exception as e:
                 print(f"Error procesando pedido: {e}")
                 telegram.enviar_mensaje(chat_id, "❌ Error al procesar el pedido.")
-
+        
+        elif "location" in msg:
+            lat = msg["location"]["latitude"]
+            lon = msg["location"]["longitude"]
+            
+            # Guardar en la BD
+            pedido_actualizado = crud.actualizar_ubicacion_pedido(db, chat_id, lat, lon)
+            
+            if pedido_actualizado:
+                # Quitar el teclado especial para que no estorbe
+                remove_keyboard = {"remove_keyboard": True}
+                telegram.enviar_mensaje(
+                    chat_id, 
+                    "✅ ¡Ubicación recibida! El conductor sabrá cómo llegar.",
+                    remove_keyboard
+                )
+            else:
+                telegram.enviar_mensaje(chat_id, "⚠️ No encontré tu pedido reciente.")
     return {"status": "ok"}
