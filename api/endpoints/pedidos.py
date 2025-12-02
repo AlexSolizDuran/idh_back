@@ -58,17 +58,22 @@ async def ciclo_asignacion_pedido(pedido_id: int, db: Session):
     # 2. Obtener todos los repartidores que están 'disponible'
     candidatos_totales = crud.get_repartidores_disponibles(db)
     
-    # 3. Filtrar los que ya están en la "lista negra" de este pedido (rechazados)
+    # 3. Filtrar rechazados
     ids_rechazados = []
     if pedido.repartidores_rechazados:
-        # Convertimos "1,5,8" -> [1, 5, 8]
         ids_rechazados = [int(x) for x in pedido.repartidores_rechazados.split(",") if x]
     
     candidatos_validos = [r for r in candidatos_totales if r.repartidor_id not in ids_rechazados]
 
     if not candidatos_validos:
-        print("❌ ALERTA: No quedan repartidores disponibles para asignar.")
-        # Aquí podrías notificar al admin o reintentar en 1 minuto
+        print("❌ ALERTA: No quedan repartidores disponibles.")
+        
+        # --- NUEVO: AVISAR AL CLIENTE QUE NO HAY NADIE ---
+        notifications.notify_telegram_bot(
+            pedido.cliente.telegram_user_id,
+            "😔 Lo sentimos, no hay repartidores disponibles cerca en este momento. Intenta de nuevo más tarde."
+        )
+        # -------------------------------------------------
         return
 
     # 4. ORDENAMIENTO POR CERCANÍA (La Novedad)
@@ -96,7 +101,7 @@ async def ciclo_asignacion_pedido(pedido_id: int, db: Session):
 
     # 7. --- ESPERAR 5 SEGUNDOS (Timeout) ---
     print(f"⏳ Esperando respuesta de {mejor_repartidor.nombre_completo}...")
-    await asyncio.sleep(5)
+    await asyncio.sleep(20)
 
     # 8. Verificación Post-Espera
     # Refrescamos el objeto pedido para ver si el repartidor lo aceptó
@@ -199,7 +204,16 @@ def aceptar_pedido(
         raise HTTPException(400, "El pedido ya no está disponible para aceptar.")
 
     # Cambio de estado -> Esto detendrá el ciclo async en su próxima verificación
-    return crud.actualizar_estado_pedido(db, pedido_id, 'EN_CAMINO_AL_RESTAURANTE')
+    pedido_actualizado = crud.actualizar_estado_pedido(db, pedido_id, 'EN_CAMINO_AL_RESTAURANTE')
+    
+    # --- NUEVO: AVISAR AL CLIENTE ---
+    notifications.notify_telegram_bot(
+        pedido.cliente.telegram_user_id,
+        f"✅ ¡Repartidor Asignado!\n\n👤 {repartidor_actual.nombre_completo} ha aceptado tu pedido y va hacia el restaurante."
+    )
+    # --------------------------------
+    
+    return pedido_actualizado
 
 @router.post("/pedidos/rechazar/{pedido_id}", response_model=schemas.Pedido)
 async def rechazar_pedido(

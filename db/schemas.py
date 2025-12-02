@@ -63,7 +63,9 @@ class Repartidor(RepartidorBase):
 # --- Esquemas para Actualización (Update) ---
 
 class RepartidorUpdateStatus(BaseModel):
-    estado_disponibilidad: str # 'disponible' o 'no_disponible'
+    estado_disponibilidad: str
+    latitud: Optional[float] = None  # <--- NUEVO
+    longitud: Optional[float] = None # <--- NUEVO
 
 # --- Esquemas de Autenticación ---
 

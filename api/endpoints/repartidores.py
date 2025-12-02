@@ -51,7 +51,9 @@ def update_status(
     updated_repartidor = crud.update_repartidor_status(
         db, 
         repartidor_id=repartidor_actual.repartidor_id, 
-        estado=status_update.estado_disponibilidad
+        estado=status_update.estado_disponibilidad,
+        lat=status_update.latitud,   # <--- NUEVO
+        lon=status_update.longitud   # <--- NUEVO
     )
     return updated_repartidor
 

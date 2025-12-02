@@ -27,18 +27,15 @@ def create_repartidor(db: Session, repartidor: schemas.RepartidorCreate) -> mode
     db.refresh(db_repartidor)
     return db_repartidor
 
-def update_repartidor_status(db: Session, repartidor_id: int, estado: str) -> models.Repartidor:
-    """Actualiza el estado de disponibilidad de un repartidor."""
+def update_repartidor_status(db: Session, repartidor_id: int, estado: str, lat: float = None, lon: float = None):
     db_repartidor = get_repartidor(db, repartidor_id)
-    if not db_repartidor:
-        return None
-    
-    # Lógica de negocio: si acepta un pedido, su estado cambia a 'en_entrega'
-    # Si termina un pedido, vuelve a 'disponible'
-    # Si se desconecta, 'no_disponible'
-    db_repartidor.estado_disponibilidad = estado
-    db.commit()
-    db.refresh(db_repartidor)
+    if db_repartidor:
+        db_repartidor.estado_disponibilidad = estado
+        if lat is not None and lon is not None: # <--- NUEVO
+            db_repartidor.latitud = lat
+            db_repartidor.longitud = lon
+        db.commit()
+        db.refresh(db_repartidor)
     return db_repartidor
 
 # --- Cliente CRUD ---
