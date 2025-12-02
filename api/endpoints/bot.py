@@ -68,9 +68,7 @@ async def recibir_pedido_web(
         )
         # ----------------------------------------
         
-        # 3. Iniciar lógica de Asignación (Tu código existente)
-        crud.actualizar_estado_pedido(db, pedido_db.pedido_id, 'BUSCANDO_REPARTIDOR')
-        background_tasks.add_task(pedidos_logic.ciclo_asignacion_pedido, pedido_db.pedido_id, db)
+        
 
         return {"status": "ok", "pedido_id": pedido_db.pedido_id}
 
@@ -145,13 +143,24 @@ async def telegram_webhook(
             pedido_actualizado = crud.actualizar_ubicacion_pedido(db, chat_id, lat, lon)
             
             if pedido_actualizado:
-                # Quitar el teclado especial para que no estorbe
+                # Quitar teclado
                 remove_keyboard = {"remove_keyboard": True}
                 telegram.enviar_mensaje(
                     chat_id, 
-                    "✅ ¡Ubicación recibida! El conductor sabrá cómo llegar.",
+                    "✅ Ubicación recibida. Buscando repartidor cercano... 🛵",
                     remove_keyboard
                 )
+                
+                # 2. ¡AHORA SÍ! INICIAR ASIGNACIÓN
+                # Cambiamos estado a BUSCANDO
+                crud.actualizar_estado_pedido(db, pedido_actualizado.pedido_id, 'BUSCANDO_REPARTIDOR')
+                
+                # Lanzamos el ciclo que usa la ubicación del restaurante y busca drivers
+                background_tasks.add_task(
+                    pedidos_logic.ciclo_asignacion_pedido, 
+                    pedido_actualizado.pedido_id, 
+                    db
+                )
             else:
-                telegram.enviar_mensaje(chat_id, "⚠️ No encontré tu pedido reciente.")
+                telegram.enviar_mensaje(chat_id, "⚠️ No encontré tu pedido reciente. Intenta pedir de nuevo.")
     return {"status": "ok"}
