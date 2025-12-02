@@ -81,7 +81,7 @@ async def telegram_webhook(
         # 1. Comando /start
         if "text" in msg and msg["text"] == "/start":
             # RECUERDA: Actualiza esta URL con la de Ngrok cuando corras el servidor
-            web_app_url = "https://nonprinting-distanceless-twanda.ngrok-free.dev/web" 
+            web_app_url = "https://idh-back.onrender.com/web" 
             
             keyboard = {
                 "inline_keyboard": [[
