@@ -80,16 +80,7 @@ def get_active_order(
         raise HTTPException(status_code=404, detail="No tienes ningún pedido activo en este momento.")
     return pedido_activo
 
-@router.get("/repartidor/pedidos/historial", response_model=list[schemas.Pedido])
-def get_order_history(
-    db: Session = Depends(database.get_db),
-    repartidor_actual: models.Repartidor = Depends(get_current_repartidor)
-):
-    """
-    Obtiene el historial de pedidos del repartidor autenticado.
-    """
-    pedidos = crud.get_pedidos_by_repartidor(db, repartidor_id=repartidor_actual.repartidor_id)
-    return pedidos
+
 
 @router.put("/repartidor/me", response_model=schemas.Repartidor)
 def update_repartidor_me(

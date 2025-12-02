@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     Configuración de la aplicación cargada desde variables de entorno.
     '''
     """
-    DATABASE_URL: str
-    JWT_SECRET_KEY: str
+    DATABASE_URL: str = "sqlite:///./delivery.db"
+    JWT_SECRET_KEY: str = "clave_secreta_super_segura_demo_123"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 

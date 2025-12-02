@@ -123,60 +123,6 @@ async def ciclo_asignacion_pedido(pedido_id: int, db: Session):
         # LLAMADA RECURSIVA: Volvemos a empezar el ciclo inmediatamente
         await ciclo_asignacion_pedido(pedido_id, db)
 
-# ==========================================
-# ENDPOINTS: CREACIÓN Y COCINA
-# ==========================================
-
-@router.post("/pedidos", response_model=schemas.Pedido, status_code=status.HTTP_201_CREATED)
-def route_create_pedido(
-    pedido: schemas.PedidoCreate, 
-    db: Session = Depends(database.get_db)
-):
-    """
-    Crea un pedido inicial (Estado: PENDIENTE_CONFIRMACION).
-    Usado por el Bot.
-    """
-    return crud.create_pedido(db, pedido)
-
-@router.post("/pedidos/aceptar_cocina/{pedido_id}", response_model=schemas.Pedido)
-def route_aceptar_cocina(
-    pedido_id: int,
-    db: Session = Depends(database.get_db)
-):
-    """
-    La cocina acepta el pedido (Estado: EN_PREPARACION).
-    """
-    pedido = crud.get_pedido(db, pedido_id)
-    if not pedido:
-        raise HTTPException(404, "Pedido no encontrado")
-    
-    # Permitimos pasar de PENDIENTE a EN_PREPARACION
-    return crud.actualizar_estado_pedido(db, pedido_id, 'EN_PREPARACION')
-
-@router.post("/pedidos/marcar_listo/{pedido_id}", response_model=schemas.Pedido)
-async def route_marcar_listo(
-    pedido_id: int,
-    background_tasks: BackgroundTasks, # Importante para el proceso en segundo plano
-    db: Session = Depends(database.get_db)
-):
-    """
-    La cocina marca el pedido como LISTO.
-    ESTO DISPARA EL ALGORITMO DE ASIGNACIÓN.
-    """
-    pedido = crud.get_pedido(db, pedido_id)
-    if not pedido:
-        raise HTTPException(404, "Pedido no encontrado")
-
-    # Reseteamos la lista de rechazados por si es un reintento
-    pedido.repartidores_rechazados = "" 
-    
-    # Cambiamos estado a BUSCANDO
-    updated_pedido = crud.actualizar_estado_pedido(db, pedido_id, 'BUSCANDO_REPARTIDOR')
-    
-    # Lanzamos el ciclo en background (Fire & Forget)
-    background_tasks.add_task(ciclo_asignacion_pedido, pedido_id, db)
-    
-    return updated_pedido
 
 # ==========================================
 # ENDPOINTS: FLUJO DEL REPARTIDOR
